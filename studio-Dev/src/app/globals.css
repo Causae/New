@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ========== PALETTE CLAIRE ========== */
+  :root {
+    /* Fond et texte principaux */
+    --background: 0 0% 100%; /* Blanc */
+    --foreground: 0 0% 9%; /* Texte presque noir (#171717) */
+
+    /* Cartes et popover */
+    --card: 0 0% 100%; /* Blanc pur */
+    --card-foreground: 0 0% 9%; /* Texte presque noir */
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    /* Couleur d'accentuation principale */
+    --primary: 27 46% 60%; /* Couleur chair (#C6956A) */
+    --primary-foreground: 0 0% 9%; /* Texte sombre sur couleur chair pour lisibilité */
+
+    /* Éléments secondaires et discrets */
+    --secondary: 0 0% 96%; /* Gris très clair pour fond secondaire (#F5F5F5) */
+    --secondary-foreground: 0 0% 24%; /* Texte sur fond secondaire (#3D3D3D) */
+
+    /* Éléments "muted" (texte/fond discrets) */
+    --muted: 0 0% 96%; /* Gris très clair */
+    --muted-foreground: 0 0% 45%; /* Texte gris moyen (#737373) */
+
+    /* Couleur d'accentuation pour les actions (boutons, liens) */
+    --accent: 0 0% 96%; /* Fond de survol très clair (#F5F5F5) */
+    --accent-foreground: 0 0% 9%;
+
+    /* Bordures et champs de saisie */
+    --border: 0 0% 90%; /* Bordure grise claire (#E5E5E5) */
+    --input: 0 0% 90%;
+    --ring: 27 46% 60%; /* Couleur chair pour l'anneau de focus */
+
+    /* Rayon */
+    --radius: 0.5rem;
+  }
+
+  /* ========== PALETTE SOMBRE ========== */
+  .dark {
+    --background: 0 0% 9%; /* Fond sombre (#171717) */
+    --foreground: 0 0% 98%; /* Texte clair (#FAFAFA) */
+
+    --card: 0 0% 15%; /* Carte sombre (#262626) */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 27 46% 60%; /* Couleur chair (#C6956A) */
+    --primary-foreground: 0 0% 9%; /* Texte sombre sur couleur chair */
+
+    --secondary: 0 0% 20%; /* Fond secondaire sombre (#333333) */
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 63%; /* Texte "muted" clair (#A1A1A1) */
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --border: 0 0% 25%; /* Bordure sombre (#404040) */
+    --input: 0 0% 25%;
+    --ring: 27 46% 60%; /* Couleur chair pour l'anneau de focus */
+  }
+
+  /* ========== APPLICATION GLOBALE ========== */
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

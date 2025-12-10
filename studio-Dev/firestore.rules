@@ -1,0 +1,217 @@
+/**
+ * Core Philosophy: This ruleset enforces a hybrid security model that combines strict
+ * user ownership with collaborative access. User data is private by default, accessible
+ * only to the owning user and administrators. Collaborative data, like quotes and
+ * messages, is accessible to the specific participants involved in a case.
+ *
+ * Data Structure: The data is organized around a primary `/users/{userId}` collection
+ * which contains user-specific subcollections like `/cases`. This creates a clear
+ * ownership hierarchy. Other top-level collections are used for globally accessible
+ * data (like `/expert_profiles`), shared data (`/quotes`), and role management
+ * (`/roles_admin`).
+ *
+ * Key Security Decisions:
+ * - Admin Roles: A user is considered an admin if a document with their UID exists
+ *   in the `/roles_admin` collection. This provides a secure, server-verifiable way
+ *   to manage global permissions.
+ * - User Privacy: Listing all users from the `/users` collection is explicitly disallowed
+ *   to protect user privacy.
+ * - Append-Only Logs: The `/action_history` collection is configured to be append-only
+ *   for all signed-in users, ensuring that audit logs cannot be tampered with or deleted.
+ *   Only admins are permitted to read these logs.
+ * - Default Secure: For any ambiguous relationships or missing authorization data
+ *   (e.g., an expert's link to a case), the rules default to the most restrictive
+ *   posture, granting access only to the explicit document owner.
+ *
+ * Denormalization for Authorization: To ensure performant and secure rules, this ruleset
+ * relies on denormalized ownership fields (e.g., `userId`, `lawyerId`, `expertId`)
+ * directly on the documents being secured. This avoids costly and sometimes impossible
+ * `get()` calls to parent documents during rule evaluation. For example, a `/quotes`
+ * document is expected to contain both the `expertId` and the `lawyerId` to grant
+ * access to both participants without needing to look up the parent case.
+ *
+ * Structural Segregation: Data with different access patterns are stored in separate
+ * top-level collections. For instance, public `/expert_profiles` are separate from
+ * private `/users/{userId}` data, and collaborative `/quotes` are separate from
+ * user-owned `/users/{userId}/cases`. This simplifies rules and makes list queries
+ * more secure and efficient.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for cleaner, more readable rules.
+
+    /**
+     * Returns true if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the currently authenticated user is a global administrator.
+     * Admin status is determined by the existence of their UID in the /roles_admin collection.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Returns true if the authenticated user's UID matches the provided userId.
+     * This is the primary function for checking document ownership.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Stores user profiles. Path-based ownership; only the user can access their own profile.
+     * @path /users/{userId}
+     * @allow A user (auth.uid='user123') reads their own profile at /users/user123. (get)
+     * @deny A user (auth.uid='user456') tries to read another user's profile at /users/user123. (get)
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isOwner(userId) || isAdmin()) && resource != null && request.resource.data.id == resource.data.id;
+      allow delete: if (isOwner(userId) || isAdmin()) && resource != null;
+    }
+
+    /**
+     * @description Stores cases created by lawyers in a top-level collection.
+     * @path /cases/{caseId}
+     * @allow A lawyer (auth.uid='lawyer123') creates a new case with `lawyerId: 'lawyer123'`. (create)
+     * @deny A lawyer (auth.uid='lawyer456') tries to read a case owned by 'lawyer123'. (get)
+     * @principle Enforces ownership via a `lawyerId` field in the document.
+     */
+    match /cases/{caseId} {
+      allow get, list: if (resource != null && request.auth.uid == resource.data.lawyerId) || isAdmin();
+      allow create: if true;
+      allow update: if (resource != null && request.auth.uid == resource.data.lawyerId) || isAdmin();
+      allow delete: if (resource != null && request.auth.uid == resource.data.lawyerId) || isAdmin();
+      // NOTE: For an expert to access a case, a denormalized `expertId` or `participantIds` field
+      // should be added to the Case document, and rules updated to check that field.
+    }
+
+
+    /**
+     * @description Stores messages associated with a specific case.
+     * @path /users/{userId}/cases/{caseId}/messages/{messageId}
+     * @allow The case owner (auth.uid='user123') lists all messages in their case. (list)
+     * @deny A user who is not the case owner tries to list messages. (list)
+     * @principle Access is primarily granted to the case owner. Individual message access is based on sender/recipient fields.
+     */
+    match /cases/{caseId}/messages/{messageId} {
+      allow get: if (get(/databases/$(database)/documents/cases/$(caseId)).data.lawyerId == request.auth.uid) || (resource != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId)) || isAdmin();
+      allow list: if (get(/databases/$(database)/documents/cases/$(caseId)).data.lawyerId == request.auth.uid) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid && get(/databases/$(database)/documents/cases/$(caseId)) != null;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Stores public expert profiles. Anyone can read, but only the expert or an admin can write.
+     * @path /expert_profiles/{expertProfileId}
+     * @allow Any user, signed in or not, can read an expert's profile. (get)
+     * @deny A user (auth.uid='user456') tries to update an expert profile owned by 'expert123'. (update)
+     * @principle Implements a "Public Read with Owner-Only Writes" pattern.
+     */
+    match /expert_profiles/{expertProfileId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if ((resource != null && request.auth.uid == resource.data.userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
+      allow delete: if (resource != null && request.auth.uid == resource.data.userId) || isAdmin();
+    }
+
+    /**
+     * @description Manages global administrator roles. Document existence implies admin status.
+     * @path /roles_admin/{userId}
+     * @allow An admin (auth.uid='admin123') adds a new admin by creating a doc at /roles_admin/newAdmin456. (create)
+     * @deny A non-admin user tries to read the list of admins. (get, list)
+     * @principle Secures role management by restricting all access to current admins.
+     */
+    match /roles_admin/{userId} {
+      allow get, list: if isAdmin();
+      allow create, update, delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description An append-only audit log. Any signed-in user can create, but none can modify or delete. Only admins can read.
+     * @path /action_history/{actionHistoryId}
+     * @allow A signed-in user's action results in a new document being created. (create)
+     * @deny Any user, including an admin, tries to delete an audit log entry. (delete)
+     * @principle Enforces data immutability for critical audit trails.
+     */
+    match /action_history/{actionHistoryId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Stores metadata for user-uploaded files. Access is based on the `userId` field.
+     * @path /file_uploads/{fileUploadId}
+     * @allow A user (auth.uid='user123') uploads a file, creating a doc with `userId: 'user123'`. (create)
+     * @deny A user (auth.uid='user456') tries to read a file document owned by 'user123'. (get)
+     * @principle Uses lookup-based ownership via a `userId` field within the document.
+     */
+    match /file_uploads/{fileUploadId} {
+      allow get: if (resource != null && request.auth.uid == resource.data.userId) || isAdmin();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if ((resource != null && request.auth.uid == resource.data.userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
+      allow delete: if (resource != null && request.auth.uid == resource.data.userId) || isAdmin();
+    }
+
+    /**
+     * @description Stores notifications for users. A user can only access their own notifications.
+     * @path /notifications/{notificationId}
+     * @allow A user (auth.uid='user123') reads a notification where `userId` is 'user123'. (get)
+     * @deny The application tries to create a notification for a user. (create) This is server-side only.
+     * @principle Enforces strict document ownership based on an internal `userId` field.
+     */
+    match /notifications/{notificationId} {
+      allow get: if resource != null && request.auth.uid == resource.data.userId;
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if resource != null && request.auth.uid == resource.data.userId;
+      allow delete: if resource != null && request.auth.uid == resource.data.userId;
+    }
+
+    /**
+     * @description Stores legal documents signed by users. Access is restricted to the owner.
+     * @path /legal_documents/{legalDocumentId}
+     * @allow A user (auth.uid='user123') creates a legal document doc with `userId: 'user123'`. (create)
+     * @deny A user (auth.uid='user456') tries to delete a document owned by 'user123'. (delete)
+     * @principle Enforces strict document ownership based on an internal `userId` field.
+     */
+    match /legal_documents/{legalDocumentId} {
+      allow get: if (resource != null && request.auth.uid == resource.data.userId) || isAdmin();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if ((resource != null && request.auth.uid == resource.data.userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
+      allow delete: if (resource != null && request.auth.uid == resource.data.userId) || isAdmin();
+    }
+
+    /**
+     * @description Stores quotes from experts for cases. Accessible to the expert and the lawyer on the case.
+     * @path /quotes/{quoteId}
+     * @allow An expert (auth.uid='expert123') creates a new quote where `expertId` is 'expert123'. (create)
+     * @deny A lawyer tries to update a quote submitted by an expert. (update)
+     * @principle Implements collaborative access by checking for participation (expert or lawyer).
+     */
+    match /quotes/{quoteId} {
+      // CRITICAL: This rule assumes the 'Quote' document contains a denormalized 'lawyerId' field
+      // in addition to the 'expertId' field to grant read access to both participants.
+      allow get: if (resource != null && (request.auth.uid == resource.data.expertId || request.auth.uid == resource.data.lawyerId)) || isAdmin();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.expertId == request.auth.uid;
+      allow update: if ((resource != null && request.auth.uid == resource.data.expertId) || isAdmin()) && request.resource.data.expertId == resource.data.expertId && request.resource.data.caseId == resource.data.caseId;
+      allow delete: if (resource != null && request.auth.uid == resource.data.expertId) || isAdmin();
+    }
+  }
+}

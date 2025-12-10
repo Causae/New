@@ -1,0 +1,568 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the CAUSAE Legaltech platform, either a lawyer or an expert.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (e.g., 'avocat', 'expert')."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "company": {
+          "type": "string",
+          "description": "Company the user belongs to, if applicable."
+        },
+        "siret": {
+          "type": "string",
+          "description": "SIRET number of the company, if applicable."
+        },
+        "linkedInProfile": {
+          "type": "string",
+          "description": "Link to the user's LinkedIn profile, if available.",
+          "format": "uri"
+        },
+        "gdprConsent": {
+          "type": "boolean",
+          "description": "Indicates if the user has given GDPR consent for data storage."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role",
+        "firstName",
+        "lastName",
+        "gdprConsent"
+      ]
+    },
+    "Case": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Case",
+      "type": "object",
+      "description": "Represents a case submitted by a lawyer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the case entity."
+        },
+        "lawyerId": {
+          "type": "string",
+          "description": "Reference to User (Lawyer). (Relationship: User 1:N Case) The ID of the lawyer who submitted the case."
+        },
+        "expertId": {
+          "type": "string",
+          "description": "Reference to User (Expert). The ID of the expert assigned to the case."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the case provided by the lawyer."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the case (e.g., 'draft', 'paid', 'matching in progress', 'expert selected', 'closed')."
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "Current status of the payment made for the case (e.g., pending, completed)."
+        }
+      },
+      "required": [
+        "id",
+        "lawyerId",
+        "description",
+        "status"
+      ]
+    },
+    "ExpertProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExpertProfile",
+      "type": "object",
+      "description": "Represents an expert's profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expert profile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User (Expert). (Relationship: User 1:1 ExpertProfile) The ID of the user (expert) associated with this profile."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the expert."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the expert."
+        },
+        "careerHistory": {
+          "type": "string",
+          "description": "Career history of the expert."
+        },
+        "cvData": {
+          "type": "string",
+          "description": "Data extracted and classified from the expert's CV."
+        },
+        "availability": {
+          "type": "string",
+          "description": "Expert's availability information."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name"
+      ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message exchanged between a lawyer and an expert.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the message entity."
+        },
+        "caseId": {
+          "type": "string",
+          "description": "Reference to Case. (Relationship: Case 1:N Message) The ID of the case this message belongs to."
+        },
+        "senderId": {
+          "type": "string",
+          "description": "Reference to User. The ID of the user who sent the message."
+        },
+        "recipientId": {
+          "type": "string",
+          "description": "Reference to User. The ID of the user who is the recipient of the message."
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the message was sent.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "senderId",
+        "recipientId",
+        "content",
+        "timestamp"
+      ]
+    },
+    "ActionHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActionHistory",
+      "type": "object",
+      "description": "Represents an action performed in the system, for audit and traceability.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the action history entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. The ID of the user who performed the action."
+        },
+        "caseId": {
+          "type": "string",
+          "description": "Reference to Case. The ID of the case the action relates to, if applicable."
+        },
+        "actionType": {
+          "type": "string",
+          "description": "Type of action performed (e.g., 'case created', 'expert matched', 'message sent')."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the action was performed.",
+          "format": "date-time"
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional details about the action performed."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "actionType",
+        "timestamp"
+      ]
+    },
+    "FileUpload": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FileUpload",
+      "type": "object",
+      "description": "Represents a file uploaded by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the file upload entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. The ID of the user who uploaded the file."
+        },
+        "caseId": {
+          "type": "string",
+          "description": "Reference to Case. The ID of the case the file is associated with, if applicable."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Name of the uploaded file."
+        },
+        "fileType": {
+          "type": "string",
+          "description": "Type of the uploaded file (e.g., 'pdf', 'docx')."
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "Size of the uploaded file in bytes."
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the file was uploaded.",
+          "format": "date-time"
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL where the file is stored."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "fileName",
+        "fileType",
+        "fileSize",
+        "uploadTimestamp",
+        "fileUrl"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification sent to a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the notification entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. The ID of the user who the notification is for."
+        },
+        "notificationType": {
+          "type": "string",
+          "description": "Type of notification (e.g., 'new message', 'deadline reminder', 'quote received')."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message content of the notification."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the notification was sent.",
+          "format": "date-time"
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Indicates if the notification has been read by the user."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "notificationType",
+        "message",
+        "timestamp",
+        "isRead"
+      ]
+    },
+    "LegalDocument": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LegalDocument",
+      "type": "object",
+      "description": "Represents a legal document.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the legal document entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the legal document."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the legal document."
+        },
+        "signedDate": {
+          "type": "string",
+          "description": "Date the legal document was signed.",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. The ID of the user who signed the document."
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL where the legal document is stored."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "signedDate",
+        "userId",
+        "fileUrl"
+      ]
+    },
+    "Quote": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quote",
+      "type": "object",
+      "description": "Represents a quote created by an expert for a case.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quote entity."
+        },
+        "expertId": {
+          "type": "string",
+          "description": "Reference to User (Expert). The ID of the expert who created the quote."
+        },
+        "caseId": {
+          "type": "string",
+          "description": "Reference to Case. The ID of the case the quote is for."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price quoted by the expert."
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional details or terms of the quote."
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Timestamp of when the quote was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "expertId",
+        "caseId",
+        "price",
+        "submissionDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership; only the user (or an admin) can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores cases created by lawyers. Lawyer ID and case status are denormalized. Access is based on the 'lawyerId' field.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "The unique identifier of the case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cases/{caseId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages associated with a specific case. Includes denormalized `caseId`, `senderId`, and `recipientId` for authorization.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "The unique identifier of the case."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier of the message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/expert_profiles/{expertProfileId}",
+        "definition": {
+          "entityName": "ExpertProfile",
+          "schema": {
+            "$ref": "#/backend/entities/ExpertProfile"
+          },
+          "description": "Stores expert profiles.  Accessible to admins and the expert themselves.",
+          "params": [
+            {
+              "name": "expertProfileId",
+              "description": "The unique identifier of the expert profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection to store admin roles. Existence of a document indicates admin status. Content is irrelevant; existence is key.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the admin user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/action_history/{actionHistoryId}",
+        "definition": {
+          "entityName": "ActionHistory",
+          "schema": {
+            "$ref": "#/backend/entities/ActionHistory"
+          },
+          "description": "Stores action history logs for auditing and traceability. No specific authorization concerns beyond basic write access for the application.",
+          "params": [
+            {
+              "name": "actionHistoryId",
+              "description": "The unique identifier of the action history entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/file_uploads/{fileUploadId}",
+        "definition": {
+          "entityName": "FileUpload",
+          "schema": {
+            "$ref": "#/backend/entities/FileUpload"
+          },
+          "description": "Stores information about uploaded files. Access control is based on the `userId` and `caseId` fields.",
+          "params": [
+            {
+              "name": "fileUploadId",
+              "description": "The unique identifier of the file upload entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores notifications for users. Access control is based on the `userId` field.",
+          "params": [
+            {
+              "name": "notificationId",
+              "description": "The unique identifier of the notification."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/legal_documents/{legalDocumentId}",
+        "definition": {
+          "entityName": "LegalDocument",
+          "schema": {
+            "$ref": "#/backend/entities/LegalDocument"
+          },
+          "description": "Stores legal documents. Access control is based on the `userId` field.",
+          "params": [
+            {
+              "name": "legalDocumentId",
+              "description": "The unique identifier of the legal document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/quotes/{quoteId}",
+        "definition": {
+          "entityName": "Quote",
+          "schema": {
+            "$ref": "#/backend/entities/Quote"
+          },
+          "description": "Stores quotes created by experts for cases. Access control is based on the `expertId` and `caseId` fields.",
+          "params": [
+            {
+              "name": "quoteId",
+              "description": "The unique identifier of the quote."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and debuggability, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). The structure prioritizes denormalization to avoid hierarchical authorization dependencies (`get()` calls) and facilitate atomic operations.  \n\n**Authorization Independence (Denormalization):**\nAuthorization data, especially membership or ownership details, is denormalized into subcollections to avoid relying on parent document data in security rules. For example, access control information for `messages` within a `case` is copied into the `messages` documents themselves, eliminating the need to `get()` the parent `case` document to verify permissions. The `Case` document contains a `lawyerId`, which dictates who owns the case.\n\n**Structural Segregation:**\nData with different access requirements are stored in separate collections. User profiles (`users/{userId}`) are separated from cases (`cases/{caseId}`), expert profiles (`expert_profiles/{expertProfileId}`). This segregation simplifies security rules by ensuring that all documents within a collection share the same access control policies. For example, all documents in the `/cases` collection are accessible based on the `lawyerId` field within the document itself.\n\n**Access Modeling:**\n*   **Private User Data:** User-specific data like profiles are stored under `/users/{userId}`, providing path-based ownership. Only the user (or an admin) can access their own profile.\n*   **User-Owned Data:** Cases created by lawyers are stored in the top-level `/cases/{caseId}` collection, with a `lawyerId` field to establish ownership. This pattern simplifies rules for who can create, read, update, or delete cases.\n*   **Collaborative Data:** The messaging system leverages subcollections under cases (`/cases/{caseId}/messages/{messageId}`) to store messages, further isolating data and simplifying access rules. The `senderId` and `recipientId` fields within the message document facilitate identifying valid participants and ensure only authorized users can access the message content.\n*   **Global Roles (DBAC):** Global roles like 'admin' are managed through the existence of documents in dedicated collections (e.g., `/roles_admin/{uid}`). This approach simplifies role-based access control rules without needing custom claims.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure `list` operations by avoiding rules that filter data based on document content. Segregation ensures that listing a collection only returns documents that the user is authorized to access. For example, listing `/cases` can now be secured by querying where `lawyerId` equals the user's UID, and the rules will enforce this on the backend.\n\n**Invariants:**\nOwnership and timestamps are explicitly managed within the document structure to maintain data integrity. For example, each `case` document stores the `lawyerId` and `status` to ensure ownership and track the case lifecycle.  The use of server timestamps via `FieldValue.serverTimestamp()` ensures the integrity of timestamps.\n\nThis design ensures a clear, maintainable, and secure Firestore structure suitable for the CAUSAE Legaltech application."
+  }
+}
+
+    
+
+    
