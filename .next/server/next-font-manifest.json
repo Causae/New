@@ -1,0 +1,13 @@
+{
+  "app": {
+    "[project]/src/app/(auth)/register/page": [
+      "static/media/B50WF7FGv37QNVWgE0ga__4Pbb6dDYs0gnHA-s.p.7f49e5b9.woff2"
+    ],
+    "[project]/src/app/page": [
+      "static/media/B50WF7FGv37QNVWgE0ga__4Pbb6dDYs0gnHA-s.p.7f49e5b9.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}
