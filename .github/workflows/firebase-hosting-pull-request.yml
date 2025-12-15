@@ -14,31 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci && npm run build
-
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          service_account_key: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STUDIO_8454607554_F90B5 }}
-          project_id: studio-8454607554-f90b5
-
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker --quiet
-
-      - name: Build and push Docker image to GCR
-        env:
-          PROJECT_ID: studio-8454607554-f90b5
-        run: |
-          IMAGE="gcr.io/$PROJECT_ID/next-app:${{ github.sha }}"
-          docker build -t "$IMAGE" .
-          docker push "$IMAGE"
-
-      - name: Deploy to Cloud Run
-        env:
-          PROJECT_ID: studio-8454607554-f90b5
-        run: |
-          IMAGE="gcr.io/$PROJECT_ID/next-app:${{ github.sha }}"
-          gcloud run deploy next-app --image "$IMAGE" --region us-central1 --platform managed --allow-unauthenticated
-
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
