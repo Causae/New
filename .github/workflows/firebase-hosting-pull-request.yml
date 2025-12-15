@@ -27,16 +27,16 @@ jobs:
       - name: Build and push Docker image to GCR
         env:
           PROJECT_ID: studio-8454607554-f90b5
-          IMAGE: gcr.io/${{ env.PROJECT_ID }}/next-app:${{ github.sha }}
         run: |
-          docker build -t $IMAGE .
-          docker push $IMAGE
+          IMAGE="gcr.io/$PROJECT_ID/next-app:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
 
       - name: Deploy to Cloud Run
         env:
           PROJECT_ID: studio-8454607554-f90b5
-          IMAGE: gcr.io/${{ env.PROJECT_ID }}/next-app:${{ github.sha }}
         run: |
+          IMAGE="gcr.io/$PROJECT_ID/next-app:${{ github.sha }}"
           gcloud run deploy next-app --image "$IMAGE" --region us-central1 --platform managed --allow-unauthenticated
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
