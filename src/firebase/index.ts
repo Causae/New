@@ -8,21 +8,23 @@ import { getFirestore } from 'firebase/firestore'
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
+    // Prefer explicit config-based initialization to avoid
+    // "Need to provide options (app/no-options)" in environments
+    // where no-arg initialization is not supported (CI/build agents).
     let firebaseApp;
     try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
       firebaseApp = initializeApp(firebaseConfig);
+    } catch (e) {
+      // If explicit config fails, attempt the no-arg initialization
+      // (used by Firebase App Hosting). If that also fails, rethrow.
+      try {
+        firebaseApp = initializeApp();
+      } catch (e2) {
+        if (process.env.NODE_ENV === "production") {
+          console.warn('Firebase initialization failed with both config and automatic initialization.', e2);
+        }
+        throw e2;
+      }
     }
 
     return getSdks(firebaseApp);

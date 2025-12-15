@@ -208,7 +208,7 @@ export default function NewCasePage() {
   const router = useRouter();
   const {firestore, user} = useFirebase();
   const {isUserLoading} = useUser();
-  const isSignInLink = useIsSignInWithEmailLink(window.location.href);
+  const isSignInLink = useIsSignInWithEmailLink(typeof window !== 'undefined' ? window.location.href : '');
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedDocuments, setUploadedDocuments] = useState<string[]>([]);
   const [hasEditedSummary, setHasEditedSummary] = useState(false);

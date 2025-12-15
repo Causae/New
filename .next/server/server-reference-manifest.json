@@ -1,5 +1,1 @@
-{
-  "node": {},
-  "edge": {},
-  "encryptionKey": "CNA1A8Zk0UCHhJjMhUPjEgULDxRJBRKUd4MyvqJDbBk="
-}
+{"node":{"40f3826fc5cf0ff659bb69129924bed70606bf6e45":{"workers":{"app/dashboard/cases/[id]/matching/page":{"moduleId":"80360","async":false}},"layer":{"app/dashboard/cases/[id]/matching/page":"action-browser"}},"406d0bdfd33875d9a79aeaa5cbe7a3eed08028ff3d":{"workers":{"app/dashboard/cases/[id]/analysis/page":{"moduleId":"88941","async":false}},"layer":{"app/dashboard/cases/[id]/analysis/page":"action-browser"}},"4062aab452df86e3c53f4a48616599cfe4bc28db0d":{"workers":{"app/dashboard/cases/[id]/analysis/page":{"moduleId":"88941","async":false}},"layer":{"app/dashboard/cases/[id]/analysis/page":"action-browser"}}},"edge":{},"encryptionKey":"CNA1A8Zk0UCHhJjMhUPjEgULDxRJBRKUd4MyvqJDbBk="}
