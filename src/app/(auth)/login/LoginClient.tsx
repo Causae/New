@@ -1,12 +1,12 @@
 "use client";
 
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import React from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +62,7 @@ export default function LoginClient() {
         description: "Redirecting to your dashboard...",
       });
       router.push(redirectUrl);
-      router.refresh(); // Refresh the page to ensure user state is updated everywhere
+      router.refresh();
     } catch (error: any) {
       console.error("Login failed:", error);
       toast({
@@ -118,7 +118,7 @@ export default function LoginClient() {
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder="********"
                           {...field}
                         />
                         <Button

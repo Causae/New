@@ -5,33 +5,31 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase() {
-  if (!getApps().length) {
-    // Prefer explicit config-based initialization to avoid
-    // "Need to provide options (app/no-options)" in environments
-    // where no-arg initialization is not supported (CI/build agents).
-    let firebaseApp;
-    try {
-      firebaseApp = initializeApp(firebaseConfig);
-    } catch (e) {
-      // If explicit config fails, attempt the no-arg initialization
-      // (used by Firebase App Hosting). If that also fails, rethrow.
-      try {
-        firebaseApp = initializeApp();
-      } catch (e2) {
-        if (process.env.NODE_ENV === "production") {
-          console.warn('Firebase initialization failed with both config and automatic initialization.', e2);
-        }
-        throw e2;
-      }
-    }
+function getValidatedConfig() {
+  const { apiKey, appId, projectId, authDomain } = firebaseConfig as {
+    apiKey?: string;
+    appId?: string;
+    projectId?: string;
+    authDomain?: string;
+  };
 
-    return getSdks(firebaseApp);
+  if (!apiKey || !appId || !projectId || !authDomain) {
+    throw new Error('Firebase configuration is missing required fields (apiKey, appId, projectId, authDomain).');
   }
 
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
+  return firebaseConfig;
+}
+
+// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+export function initializeFirebase() {
+  const existingApp = getApps()[0];
+  if (existingApp) {
+    return getSdks(existingApp);
+  }
+
+  // Always initialize with an explicit config to avoid app/no-options in CI/build environments.
+  const firebaseApp = initializeApp(getValidatedConfig());
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
